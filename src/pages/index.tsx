@@ -90,9 +90,7 @@ const calculateRSI = (data: ChartDataPoint[]): RsiDataPoint[] => {
   return rsiData;
 };
 
-interface HistoricalData {
-  [key in TimeFrame]: ChartDataPoint[];
-}
+type HistoricalData = Record<TimeFrame, ChartDataPoint[]>;
 
 interface Stock {
   symbol: string;
