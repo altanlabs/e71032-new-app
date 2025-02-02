@@ -7,9 +7,19 @@ import * as XLSX from 'xlsx';
 
 type TimeFrame = '1D' | '1S' | '1M' | '3M' | '1A';
 
+interface ChartDataPoint {
+  time: string;
+  value: number;
+}
+
+interface RsiDataPoint {
+  time: string;
+  rsi: number;
+}
+
 // Función para generar datos históricos simulados
-const generateHistoricalData = (baseValue: number, days: number) => {
-  const data = [];
+const generateHistoricalData = (baseValue: number, days: number): ChartDataPoint[] => {
+  const data: ChartDataPoint[] = [];
   let currentValue = baseValue;
   const now = new Date();
   
@@ -31,7 +41,7 @@ const generateHistoricalData = (baseValue: number, days: number) => {
 };
 
 // Función para exportar a Excel
-const exportToExcel = (data: any[], symbol: string) => {
+const exportToExcel = (data: ChartDataPoint[], symbol: string): void => {
   // Preparar los datos para Excel
   const excelData = data.map(item => ({
     Fecha: item.time,
@@ -50,9 +60,9 @@ const exportToExcel = (data: any[], symbol: string) => {
 };
 
 // Función para calcular el RSI
-const calculateRSI = (data: Array<{ time: string; value: number }>) => {
+const calculateRSI = (data: ChartDataPoint[]): RsiDataPoint[] => {
   const rsiPeriod = 14;
-  const rsiData = [];
+  const rsiData: RsiDataPoint[] = [];
   
   for (let i = 0; i < data.length; i++) {
     if (i < rsiPeriod) {
@@ -67,8 +77,8 @@ const calculateRSI = (data: Array<{ time: string; value: number }>) => {
     const previousPrice = data[i - 1].value;
     const trend = currentPrice - previousPrice;
     
-    const lastRsi = rsiData[i - 1].rsi;
-    let newRsi = lastRsi + (trend * 2);
+    const lastRsi: number = rsiData[i - 1].rsi;
+    let newRsi: number = lastRsi + (trend * 2);
     newRsi = Math.max(0, Math.min(100, newRsi));
     
     rsiData.push({
@@ -80,8 +90,21 @@ const calculateRSI = (data: Array<{ time: string; value: number }>) => {
   return rsiData;
 };
 
+interface HistoricalData {
+  [key in TimeFrame]: ChartDataPoint[];
+}
+
+interface Stock {
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  historicalData: HistoricalData;
+}
+
 // Generar datos históricos para cada empresa
-const generateStockData = (basePrice: number) => {
+const generateStockData = (basePrice: number): HistoricalData => {
   return {
     '1D': generateHistoricalData(basePrice, 1),
     '1S': generateHistoricalData(basePrice, 7),
@@ -92,7 +115,7 @@ const generateStockData = (basePrice: number) => {
 };
 
 // Sample data con diferentes temporalidades
-const sampleStocks = [
+const sampleStocks: Stock[] = [
   { 
     symbol: "SAN", 
     name: "Banco Santander", 
@@ -144,17 +167,17 @@ const sampleStocks = [
 ];
 
 // IBEX 35 data
-const ibexHistoricalData = generateStockData(10000);
+const ibexHistoricalData: HistoricalData = generateStockData(10000);
 
 export default function IndexPage() {
   const [selectedStock, setSelectedStock] = useState<{
     symbol: string;
-    data: Array<{ time: string; value: number }>;
+    data: ChartDataPoint[];
   }>({ symbol: "IBEX 35", data: ibexHistoricalData['1D'] });
 
   const [timeFrame, setTimeFrame] = useState<TimeFrame>('1D');
 
-  const handleStockClick = (stock: typeof sampleStocks[0]) => {
+  const handleStockClick = (stock: Stock) => {
     setSelectedStock({
       symbol: stock.symbol,
       data: stock.historicalData[timeFrame]
